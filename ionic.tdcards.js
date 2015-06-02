@@ -24,6 +24,8 @@
   }
 
   var SwipeableCardView = ionic.views.View.inherit({
+    canDrag: true,
+
     /**
      * Initialize a card with the given options.
      */
@@ -40,7 +42,14 @@
 
       this.startX = this.startY = this.x = this.y = 0;
 
-      this.bindEvents();
+      if (opts.canDrag) {
+        this.canDrag = opts.canDrag;
+      }
+
+      if (this.canDrag === "true" || this.canDrag === true) {
+        this.bindEvents();
+      }
+
     },
 
     /**
@@ -116,7 +125,7 @@
     swipe: function() {
       this.transitionOut();
     },
-    
+
     /**
      * Snap the card back to its original position
      */
@@ -140,7 +149,7 @@
       }
 
       self.onTransitionOut(self.thresholdAmount);
-      
+
       var angle = Math.atan(e.gesture.deltaX / e.gesture.deltaY);
 
       var dir = this.thresholdAmount < 0 ? -1 : 1;
@@ -158,7 +167,7 @@
       var rotateTo = this.rotationAngle;//(this.rotationAngle this.rotationDirection * 0.2));// || (Math.random() * 0.4);
 
       var duration = 0.3 - Math.min(Math.max(Math.abs(e.gesture.velocityX)/10, 0.05), 0.2);
-      
+
       ionic.requestAnimationFrame(function() {
         self.el.style.transform = self.el.style.webkitTransform = 'translate3d(' + targetX + 'px, ' + targetY + 'px,0) rotate(' + self.rotationAngle + 'rad)';
         self.el.style.transition = self.el.style.webkitTransition = 'all ' + duration + 's ease-in-out';
@@ -213,6 +222,7 @@
 
     _doDragStart: function(e) {
       e.preventDefault();
+
       var width = this.el.offsetWidth;
       var point = window.innerWidth / 2 + this.rotationDirection * (width / 2)
       var distance = Math.abs(point - e.gesture.touches[0].pageX);// - window.innerWidth/2);
@@ -279,19 +289,21 @@
         onTransitionOut: '&',
         onPartialSwipe: '&',
         onSnapBack: '&',
-        onDestroy: '&'
+        onDestroy: '&',
+        canDrag: '@'
       },
       compile: function(element, attr) {
         return function($scope, $element, $attr, swipeCards) {
           var el = $element[0];
           var leftText = el.querySelector('.no-text');
           var rightText = el.querySelector('.yes-text');
-          
+
           // Force hardware acceleration for animation - better performance on first touch
           el.style.transform = el.style.webkitTransform = 'translate3d(0px, 0px, 0px)';
 
           // Instantiate our card view
           var swipeableCard = new SwipeableCardView({
+            canDrag: $scope.canDrag,
             el: el,
             leftText: leftText,
             rightText: rightText,
@@ -362,7 +374,7 @@
                 frequency: 15,
                 friction: 250,
                 initialForce: false
-              }) 
+              })
 
               .on('step', function(v) {
                 //Have the element spring over 400px
@@ -395,7 +407,9 @@
       restrict: 'E',
       template: '<div class="td-cards" ng-transclude></div>',
       transclude: true,
-      scope: {},
+      scope: {
+        'cardsSpace': '@'
+      },
       controller: ['$scope', '$element', function($scope, $element) {
         var cards;
         var firstCard, secondCard, thirdCard;
@@ -411,7 +425,7 @@
             card = existingCards[i];
             if(!card) continue;
             if(i > 0) {
-              card.style.transform = card.style.webkitTransform = 'translate3d(0, ' + (i * 4) + 'px, 0)';
+              card.style.transform = card.style.webkitTransform = 'translate3d(0, ' + (i * ($scope.cardsSpace || 4)) + 'px, 0)';
             }
             card.style.zIndex = (existingCards.length - i);
           }
