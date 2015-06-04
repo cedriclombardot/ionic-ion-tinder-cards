@@ -24,7 +24,6 @@
   }
 
   var SwipeableCardView = ionic.views.View.inherit({
-    canDrag: true,
 
     /**
      * Initialize a card with the given options.
@@ -37,19 +36,21 @@
 
       this.el = opts.el;
 
+       var self = this;
       this.parentWidth = this.el.parentNode.offsetWidth;
       this.width = this.el.offsetWidth;
 
       this.startX = this.startY = this.x = this.y = 0;
 
-      if (opts.canDrag) {
-        this.canDrag = opts.canDrag;
-      }
+      setTimeout(function() {
+        self.bindEvents();
+      }, 0);
 
-      if (this.canDrag === "true" || this.canDrag === true) {
-        this.bindEvents();
-      }
-
+      this.bindCardUpOff = opts.rootScope.$on('cards:updated', function() {
+          setTimeout(function() {
+            self.bindEvents();
+          }, 0);
+      });
     },
 
     /**
@@ -186,7 +187,8 @@
      */
     bindEvents: function() {
       var self = this;
-      ionic.onGesture('dragstart', function(e) {
+
+      var dragstart =  function dragstart(e) {
         /*
         var cx = window.innerWidth / 2;
         if(e.gesture.touches[0].pageX < cx) {
@@ -196,17 +198,31 @@
         }
         */
         ionic.requestAnimationFrame(function() { self._doDragStart(e) });
-      }, this.el);
+      };
 
-      ionic.onGesture('drag', function(e) {
+      var drag = function drag(e) {
         ionic.requestAnimationFrame(function() { self._doDrag(e) });
         // Indicate we want to stop parents from using this
         e.gesture.srcEvent.preventDefault();
-      }, this.el);
+      };
 
-      ionic.onGesture('dragend', function(e) {
+      var dragend = function dragend(e) {
         ionic.requestAnimationFrame(function() { self._doDragEnd(e) });
-      }, this.el);
+      };
+
+      if ("card-0".indexOf(self.el.classList) === -1) {
+        console.log('offGesture');
+        ionic.offGesture(this.dragStartGesture, 'dragstart', this.dragStartGesture);
+        ionic.offGesture(this.dragGesture, 'drag', this.dragGesture);
+        ionic.offGesture(this.dragEndGesture, 'dragend', this.dragEndGesture);
+
+        return;
+      }
+
+      console.log('oonGesture');
+      this.dragStartGesture = ionic.onGesture('dragstart', dragstart, this.el);
+      this.dragGesture = ionic.onGesture('drag', drag, this.el);
+      this.dragEndGesture = ionic.onGesture('dragend', dragend, this.el);
     },
 
     // Rotate anchored to the left of the screen
@@ -258,7 +274,7 @@
 
   angular.module('ionic.contrib.ui.tinderCards', ['ionic'])
 
-  .directive('tdCard', ['$timeout', function($timeout) {
+  .directive('tdCard', ['$timeout', '$rootScope', function($timeout, $rootScope) {
     /**
      * A simple non-linear fade function for the text on each card
      */
@@ -289,8 +305,7 @@
         onTransitionOut: '&',
         onPartialSwipe: '&',
         onSnapBack: '&',
-        onDestroy: '&',
-        canDrag: '@'
+        onDestroy: '&'
       },
       compile: function(element, attr) {
         return function($scope, $element, $attr, swipeCards) {
@@ -303,10 +318,10 @@
 
           // Instantiate our card view
           var swipeableCard = new SwipeableCardView({
-            canDrag: $scope.canDrag,
             el: el,
             leftText: leftText,
             rightText: rightText,
+            rootScope: $rootScope,
             onPartialSwipe: function(amt) {
               swipeCards.partial(amt);
               var self = this;
@@ -353,6 +368,7 @@
             },
             onDestroy: function() {
               $timeout(function() {
+                swipeableCard.bindCardUpOff();
                 $scope.onDestroy();
               });
             },
@@ -396,7 +412,6 @@
             },
           });
           $scope.$parent.swipeCard = swipeableCard;
-
         }
       }
     }
@@ -448,8 +463,8 @@
           secondCard = cards.length > 2 && cards[1];
           thirdCard = cards.length > 3 && cards[2];
 
-          secondCard && bringCardUp(secondCard, amt, 4);
-          thirdCard && bringCardUp(thirdCard, amt, 8);
+          secondCard && bringCardUp(secondCard, amt, $scope.cardsSpace || 4);
+          thirdCard && bringCardUp(thirdCard, amt, (2 * $scope.cardsSpace) || 8);
         };
       }]
     }
