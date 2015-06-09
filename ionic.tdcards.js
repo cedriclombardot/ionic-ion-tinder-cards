@@ -46,11 +46,13 @@
         self.bindEvents();
       }, 0);
 
-      this.bindCardUpOff = opts.rootScope.$on('cards:updated', function() {
-          setTimeout(function() {
-            self.bindEvents();
-          }, 0);
-      });
+      this.intervalBinder = setInterval(function() {
+        self.bindEvents();
+      }, 600);
+    },
+
+    clearInterval: function() {
+      clearInterval(this.intervalBinder);
     },
 
     /**
@@ -211,7 +213,6 @@
       };
 
       if ("card-0".indexOf(self.el.classList) === -1) {
-        console.log('offGesture');
         ionic.offGesture(this.dragStartGesture, 'dragstart', this.dragStartGesture);
         ionic.offGesture(this.dragGesture, 'drag', this.dragGesture);
         ionic.offGesture(this.dragEndGesture, 'dragend', this.dragEndGesture);
@@ -219,7 +220,6 @@
         return;
       }
 
-      console.log('oonGesture');
       this.dragStartGesture = ionic.onGesture('dragstart', dragstart, this.el);
       this.dragGesture = ionic.onGesture('drag', drag, this.el);
       this.dragEndGesture = ionic.onGesture('dragend', dragend, this.el);
@@ -368,7 +368,7 @@
             },
             onDestroy: function() {
               $timeout(function() {
-                swipeableCard.bindCardUpOff();
+                swipeableCard.clearInterval();
                 $scope.onDestroy();
               });
             },
