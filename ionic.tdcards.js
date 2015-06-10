@@ -46,7 +46,7 @@
         self.bindEvents();
       }, 0);
 
-      this.intervalBinder = setInterval(function() {
+      setInterval(function() {
         self.bindEvents();
       }, 600);
     },
@@ -440,7 +440,7 @@
             card = existingCards[i];
             if(!card) continue;
             if(i > 0) {
-              card.style.transform = card.style.webkitTransform = 'translate3d(0, ' + (i * ($scope.cardsSpace || 4)) + 'px, 0)';
+              card.style.transform = card.style.webkitTransform = 'translate3d(0, ' + (i * ($scope.cardsSpace || 8)) + 'px, 0)';
             }
             card.style.zIndex = (existingCards.length - i);
           }
@@ -463,8 +463,8 @@
           secondCard = cards.length > 2 && cards[1];
           thirdCard = cards.length > 3 && cards[2];
 
-          secondCard && bringCardUp(secondCard, amt, $scope.cardsSpace || 4);
-          thirdCard && bringCardUp(thirdCard, amt, (2 * $scope.cardsSpace) || 8);
+          secondCard && bringCardUp(secondCard, amt, $scope.cardsSpace || 8);
+          thirdCard && bringCardUp(thirdCard, amt, (2 * $scope.cardsSpace) || 16);
         };
       }]
     }
